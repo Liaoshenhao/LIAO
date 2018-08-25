@@ -1,4 +1,5 @@
 # 修改顺序操作
+*涉及copy的函数一定要预先分配目标内存大小*
 ## 1. copy()和copy_n()
 ```
 -功能：
@@ -430,10 +431,313 @@ std::replace_copy (myints, myints+8, myvector.begin(), 20, 99);
     // 0 2 0 4 0 6 0 8 0
 ```
 
+## 11.fill()和fill_n()
+```
+-功能：
+void fill ( first, last, const T& val)；
+将区间内元素全部替换成val值
+
+Iterator fill_n ( first, Size n, const T& val)
+将first开始的n个元素替换成val
 
 
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::fill
+#include <vector>       // std::vector
+
+int main () {
+  std::vector<int> myvector (8);                       
+  // myvector: 0 0 0 0 0 0 0 0
+
+  std::fill (myvector.begin(),myvector.begin()+4,5);  
+  // myvector: 5 5 5 5 0 0 0 0
+  std::fill (myvector.begin()+3,myvector.end()-2,8);   
+  // myvector: 5 5 5 8 8 8 0 0
+
+  std::cout << "myvector contains:";
+  for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
 
 
+Output:
+myvector contains: 5 5 5 8 8 8 0 0
+
+--------------------------------------
+
+#include <iostream>     // std::cout
+#include <algorithm>    // std::fill_n
+#include <vector>       // std::vector
+
+int main () {
+  std::vector<int> myvector (8,10);        
+  // myvector: 10 10 10 10 10 10 10 10
+
+  std::fill_n (myvector.begin(),4,20);     
+  // myvector: 20 20 20 20 10 10 10 10
+  std::fill_n (myvector.begin()+3,3,33);   
+  // myvector: 20 20 20 33 33 33 10 10
+
+  std::cout << "myvector contains:";
+  for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
 
 
+Output:
+myvector contains: 20 20 20 33 33 33 10 10
+```
+
+## 12. generate()和generate_n()
+```
+-功能：
+void generate ( first,  last, Generator gen );
+gen是一个生成函数，给你一个给定区间，将某个值依次填入容器。
+
+void generate_n ( first, Size n, Generator gen )；
+它是从begin开始，连续填充n个使用生成函数生成后的数值。
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::generate
+#include <vector>       // std::vector
+#include <ctime>        // std::time
+#include <cstdlib>      // std::rand, std::srand
+
+// function generator:
+int RandomNumber () { return (std::rand()%100); }
+
+int main () {
+  std::srand ( unsigned ( std::time(0) ) );
+
+  std::vector<int> myvector (8);
+
+  std::generate (myvector.begin(), myvector.end(), RandomNumber);
+  //或者std::generate_n (myvector.begin(), 8, RandomNumber);
+
+  std::cout << "myvector contains:";
+  for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
+    std::cout << ' ' << *it;
+ 
+  return 0;
+}
+
+
+A possible output:
+myvector contains: 57 87 76 66 85 54 17 15
+```
+
+## 13. remove()和remove_if()以及remove_copy和remove_copy_if()
+```
+-功能：
+Iterator remove ( first,  last, const T& val)；
+将区间内值为val的全部移除，返回移除后的末端下一地址；
+
+Iterator remove_if (first,last, UnaryPredicate pred)；
+将区间内满足条件的移除，返回移除后的末端下一地址；
+
+Iterator remove_copy (first, last, result, const T& val);
+将区间内值为val的全部移除并拷贝到result，返回result的末端下一地址；
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::remove
+
+int main () {
+  int myints[] = {10,20,30,30,20,10,10,20};      
+  // 10 20 30 30 20 10 10 20
+
+  int* pbegin = myints;                          
+  int* pend = myints+sizeof(myints)/sizeof(int);                
+
+  pend = std::remove (pbegin, pend, 20);         
+  // 10 30 30 10 10 ?  ?  ?
+  std::cout << "range contains:";
+  for (int* p=pbegin; p!=pend; ++p)
+    std::cout << ' ' << *p;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+range contains: 10 30 30 10 10
+
+--------------------------------
+
+#include <iostream>     // std::cout
+#include <algorithm>    // std::remove_if
+
+bool IsOdd (int i) { return ((i%2)==1); }
+
+int main () {
+  int myints[] = {1,2,3,4,5,6,7,8,9};           
+   // 1 2 3 4 5 6 7 8 9
+
+  int* pbegin = myints;                         
+  int* pend = myints+sizeof(myints)/sizeof(int);            
+
+  pend = std::remove_if (pbegin, pend, IsOdd);  
+   // 2 4 6 8 ? ? ? ? ?     
+  std::cout << "the range contains:";
+  for (int* p=pbegin; p!=pend; ++p)
+    std::cout << ' ' << *p;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+the range contains: 2 4 6 8
+
+
+---------------------------
+
+#include <iostream>     // std::cout
+#include <algorithm>    // std::remove_copy
+#include <vector>       // std::vector
+
+int main () {
+  int myints[] = {10,20,30,30,20,10,10,20};               
+  // 10 20 30 30 20 10 10 20
+  std::vector<int> myvector (8);
+  std::vector<int>::iterator p;
+  p=std::remove_copy (myints,myints+8,myvector.begin(),20); 
+  // 10 30 30 10 10 0 0 0
+
+  std::cout << "myvector contains:";
+  for (std::vector<int>::iterator it=myvector.begin(); it!=p; ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+myvector contains: 10 30 30 10 10
+```
+
+## 14.unique()和unique_copy()
+```
+-功能：
+Iterator unique ( first, last)
+“去掉”容器中相邻元素的重复元素，返回值是去重之后的尾地址
+
+Iterator unique ( first, last,myfunction);
+“去掉”容器中相邻元素满足条件后一元素，返回值是去重之后的尾地址
+
+Iterator unique_copy (first,last,result,myfunction(可省略))；
+“去掉”容器中相邻元素的重复元素并拷贝，返回result最后元素地址
+
+示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::unique, std::distance
+#include <vector>       // std::vector
+
+bool myfunction (int i, int j) {
+  return (i>=j);
+}
+
+int main () {
+  int myints[] = {10,20,20,20,30,30,20,40,10};
+  std::vector<int> myvector (myints,myints+9);
+  // 10 20 20 20 30 30 20 40 10
+  std::vector<int>::iterator it;
+  it = std::unique (myvector.begin(), myvector.end());
+  // 10 20 30 20 40 10 ?  ?  ?
+
+  it = std::unique (myvector.begin(), myvector.end(), myfunction);
+   // 10 20 30 40
+  myvector.resize( std::distance(myvector.begin(),it) );
+  std::cout << "myvector contains:";
+  for (it=myvector.begin(); it!=myvector.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+myvector contains: 10 20 30 40
+```
+
+## 15. reverse()
+```
+-功能：
+void reverse ( first,  last)；
+区间内元素逆序
+
+Iterator reverse_copy （first， last,  result)；
+区间内元素逆序并拷贝
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::reverse
+#include <vector>       // std::vector
+
+int main () {
+  std::vector<int> myvector;
+  for (int i=1; i<10; ++i) myvector.push_back(i);   
+  // 1 2 3 4 5 6 7 8 9
+
+  std::reverse(myvector.begin(),myvector.end());    
+  // 9 8 7 6 5 4 3 2 1
+
+  std::cout << "myvector contains:";
+  for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+myvector contains: 9 8 7 6 5 4 3 2 1
+```
+
+## 16.rotate()和rotate_copy()
+```
+-功能：
+void rotate ( first,  middle, last);
+将middle前面区间元素和后面区间元素旋转
+
+Iterator rotate_copy (first,middle,last,result)
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::rotate
+#include <vector>       // std::vector
+
+int main () {
+  std::vector<int> myvector;
+  for (int i=1; i<10; ++i) myvector.push_back(i);
+   // 1 2 3 4 5 6 7 8 9
+
+  std::rotate(myvector.begin(),myvector.begin()+3,myvector.end());
+    // 4 5 6 7 8 9 1 2 3
+  // print out content:
+  std::cout << "myvector contains:";
+  for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+myvector contains: 40 50 60 70 10 20 30
+```
 
