@@ -305,4 +305,342 @@ bool binary_search ( first,  last, const T& val);
 判断序列是否存在值为val的元素，默认升序要注意
 ```
 
+# 四、Merge合并函数系列
+*此系列元素都需要先进行sort排序，方可正确执行*
+## 1. Merge()
+```
+-功能：
+Iterator merge (first1, last1, first2, last2, result)；
+将内容1与内容2合并并放在result并升序顺序
+注意要求内容1和内容2都是升序
 
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::merge, std::sort
+#include <vector>       // std::vector
+
+int main () {
+  int first[] = {5,10,15,20,25};
+  int second[] = {50,40,30,20,10};
+  std::vector<int> v(10);
+
+  std::sort (first,first+5);
+  std::sort (second,second+5);
+  std::merge (first,first+5,second,second+5,v.begin());
+
+  std::cout << "The resulting vector contains:";
+  for (std::vector<int>::iterator it=v.begin(); it!=v.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+The resulting vector contains: 5 10 10 15 20 20 25 30 40 50
+```
+
+# 2. inplace_merge()
+```
+-功能：
+void inplace_merge (first,middle,last);
+将同一容器的两段升序内容重新整体升序排序；
+
+void inplace_merge ( first, middle, last, Compare comp);
+若两段内容为降序，则可通过comp函数说明
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // inplace_merge,sort,copy
+#include <vector>       // std::vector
+bool comp(int i ,int j)
+{return i>j;}
+int main () {
+  int first[] = {50,40,30,20,10};
+  int second[] = {10,20,30,40,50};
+  std::vector<int> v(10);
+  std::vector<int>::iterator it;
+
+  std::sort (second,second+5,comp);
+
+  it=std::copy (first, first+5, v.begin());
+     std::copy (second,second+5,it);
+
+  std::inplace_merge (v.begin(),v.begin()+5,v.end(),comp);
+
+  std::cout << "The resulting vector contains:";
+  for (it=v.begin(); it!=v.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+The resulting vector contains: 50 50 40 40 30 30 20 20 10 10
+```
+
+## 3. includes()
+```
+-功能：
+bool includes ( first1,  last1, first2, last2)
+判断序列1是否包含有序列2的全部元素，需要升序排列
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::includes, std::sort
+
+int main () {
+  int container[] = {5,10,15,20,25,30,35,40,45,50};
+  int continent[] = {40,30,20,10};
+
+  std::sort (container,container+10);
+  std::sort (continent,continent+4);
+
+  // using default comparison:
+  if ( std::includes(container,container+10,continent,continent+4) )
+    std::cout << "container includes continent!\n";
+  
+  return 0;
+}
+
+```
+
+## 4. set_union()
+```
+-功能：
+Iterator set_union (first1, last1,first2, last2, result);
+将两个升序序列去除重复元素后排序放于result，可添加comp变为降序
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::set_union, std::sort
+#include <vector>       // std::vector
+
+int main () {
+  int first[] = {5,10,15,20,25};
+  int second[] = {50,40,30,20,10};
+  std::vector<int> v(10);                      
+  std::vector<int>::iterator it;
+
+  std::sort (first,first+5);     //  5 10 15 20 25
+  std::sort (second,second+5);   // 10 20 30 40 50
+
+  it=std::set_union (first, first+5, second, second+5, v.begin());
+  // 5 10 15 20 25 30 40 50  0  0
+  v.resize(it-v.begin());                      
+  // 5 10 15 20 25 30 40 50
+
+  std::cout << "The union has " << (v.size()) << " elements:\n";
+  for (it=v.begin(); it!=v.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+The union has 8 elements:
+ 5 10 15 20 25 30 40 50
+ ```
+
+ ## 5. set_intersection()
+ ```
+ -功能：
+ Iterator set_intersection (first1,last1,first2,last2, result);
+ 将两个升序序列中的重复元素提取出来排序放在result，可添加comp函数
+
+ -示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::set_intersection, std::sort
+#include <vector>       // std::vector
+
+int main () {
+  int first[] = {5,10,15,20,25};
+  int second[] = {50,40,30,20,10};
+  std::vector<int> v(10);                     
+  std::vector<int>::iterator it;
+
+  std::sort (first,first+5);     //  5 10 15 20 25
+  std::sort (second,second+5);   // 10 20 30 40 50
+
+  it=std::set_intersection (first, first+5, second, second+5, v.begin());
+  // 10 20 0  0  0  0  0  0  0  0
+  v.resize(it-v.begin());                      
+  // 10 20
+
+  std::cout << "The intersection has " << (v.size()) << " elements:\n";
+  for (it=v.begin(); it!=v.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+The intersection has 2 elements:
+ 10 20
+ ```
+
+ ## 6.set_difference()和set_symmetric_difference()
+ ```
+ -功能：
+ Iterator set_difference (first1,last1,first2,last2,result);
+ 将两个升序序列中的第一个序列独有元素提取出来排序放在result，可添加comp函数
+
+ set_symmetric_difference()则是将两个序列中的独有元素都提取出来排序
+
+ -示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::set_difference, std::sort
+#include <vector>       // std::vector
+
+int main () {
+  int first[] = {5,10,15,20,25};
+  int second[] = {50,40,30,20,10};
+  std::vector<int> v(10);                     
+  std::vector<int>::iterator it;
+
+  std::sort (first,first+5);     //  5 10 15 20 25
+  std::sort (second,second+5);   // 10 20 30 40 50
+
+  it=std::set_difference (first, first+5, second, second+5, v.begin());
+  //  5 15 25  0  0  0  0  0  0  0
+  v.resize(it-v.begin());                      
+  //  5 15 25
+
+  std::cout << "The difference has " << (v.size()) << " elements:\n";
+  for (it=v.begin(); it!=v.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+Output:
+The difference has 3 elements:
+ 5 15 25
+ ```
+
+# 五、min/max最大最小函数系列
+## 1. min()/max()
+```
+-功能：
+const T& max/min (const T& a, const T& b)
+求最大最小值，双目运算，对象可以是整型、字符型、浮点型等
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::min
+
+int main () {
+  std::cout << "min(1,2)==" << std::min(1,2) << '\n';
+  std::cout << "min('a','z')==" << std::min('a','z') << '\n';
+  std::cout << "min(3.14,2.72)==" << std::min(3.14,2.72) << '\n';
+
+  std::cout << "max(1,2)==" << std::max(1,2) << '\n';
+  std::cout << "max('a','z')==" << std::max('a','z') << '\n';
+  std::cout << "max(3.14,2.73)==" << std::max(3.14,2.73) << '\n';
+  return 0;
+}
+```
+
+## 2. min_element()和max_element()
+```
+-功能：
+Iterator min/max_element ( first, last )；
+返回一个序列最小值/最大值元素的指针
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::min_element, std::max_element
+
+bool myfn(int i, int j) { return i<j; }
+
+struct myclass {
+  bool operator() (int i,int j) { return i<j; }
+} myobj;
+
+int main () {
+  int myints[] = {3,7,2,5,6,4,9};
+
+  // using default comparison:
+  std::cout << "The smallest element is " << *std::min_element(myints,myints+7) << '\n';
+  std::cout << "The largest element is "  << *std::max_element(myints,myints+7) << '\n';
+
+  // using function myfn as comp:
+  std::cout << "The smallest element is " << *std::min_element(myints,myints+7,myfn) << '\n';
+  std::cout << "The largest element is "  << *std::max_element(myints,myints+7,myfn) << '\n';
+
+  // using object myobj as comp:
+  std::cout << "The smallest element is " << *std::min_element(myints,myints+7,myobj) << '\n';
+  std::cout << "The largest element is "  << *std::max_element(myints,myints+7,myobj) << '\n';
+
+  return 0;
+}
+
+
+Output:
+The smallest element is 2
+The largest element is 9
+The smallest element is 2
+The largest element is 9
+The smallest element is 2
+The largest element is 9
+```
+
+# 六、heap堆操作
+```
+make_heap 
+在容器范围内，就地建堆，保证最大值在所给范围的最前面，其他值的位置不确定
+
+pop_heap 
+将堆顶(所给范围的最前面)元素移动到所给范围的最后，并且将新的最大值置于所给范围的最前面
+
+push_heap 
+当已建堆的容器范围内有新的元素插入末尾后，应当调用push_heap将该元素插入堆中。
+
+-示例：
+#include <iostream>     // std::cout
+#include <algorithm>    // std::make_heap, std::pop_heap, std::push_heap, std::sort_heap
+#include <vector>       // std::vector
+
+int main () {
+  int myints[] = {10,20,30,5,15};
+  std::vector<int> v(myints,myints+5);
+
+  std::make_heap (v.begin(),v.end());
+  std::cout << "initial max heap   : " << v.front() << '\n';
+
+  std::pop_heap (v.begin(),v.end()); 
+  v.pop_back();
+  std::cout << "max heap after pop : " << v.front() << '\n';
+  //30处在v.end()处，被抛弃了
+
+  v.push_back(99); std::push_heap (v.begin(),v.end());
+  std::cout << "max heap after push: " << v.front() << '\n';
+
+  std::sort_heap (v.begin(),v.end());
+
+  std::cout << "final sorted range :";
+  for (unsigned i=0; i<v.size(); i++)
+    std::cout << ' ' << v[i];
+
+  std::cout << '\n';
+
+  return 0;
+}
+
+
+
+Output:
+initial max heap   : 30
+max heap after pop : 20
+max heap after push: 99
+final sorted range : 5 10 15 20 99
+```
